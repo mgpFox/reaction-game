@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>反應力小遊戲 + 排行榜</title>
+    <style>
+        body {
+            background-color: #2f2f2f;
+            color: white;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+            button:hover {
+                background-color: #777;
+            }
+
+        #message {
+            font-size: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        #leaderboard {
+            width: 300px;
+            background-color: #444;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+            #leaderboard h2 {
+                text-align: center;
+                margin-top: 0;
+            }
+
+            #leaderboard ol {
+                padding-left: 20px;
+            }
+    </style>
+</head>
+<body>
+    <div id="message">請按開始</div>
+    <div id="container">
+        <button id="startBtn">開始</button>
+        <button id="reactBtn">反應</button>
+    </div>
+    <div id="leaderboard">
+        <h2>反應速度排行榜 (前10名)</h2>
+        <ol id="rankList"></ol>
+    </div>
+
+    <script>
+        let startBtn = document.getElementById('startBtn');
+        let reactBtn = document.getElementById('reactBtn');
+        let message = document.getElementById('message');
+        let rankList = document.getElementById('rankList');
+
+        let gameStarted = false;
+        let startTime = 0;
+        let timeoutId = null;
+        let leaderboard = [];
+
+        function updateLeaderboard() {
+            rankList.innerHTML = '';
+            for (let i = 0; i < leaderboard.length; i++) {
+                let li = document.createElement('li');
+                li.textContent = leaderboard[i].toFixed(3) + ' 毫秒';
+                rankList.appendChild(li);
+            }
+        }
+
+        startBtn.onclick = function () {
+            if (gameStarted) {
+                message.textContent = '遊戲已開始，請按右邊反應鍵!';
+                return;
+            }
+            gameStarted = false;
+            message.textContent = '等待中...請準備按反應鍵';
+            reactBtn.disabled = false;
+
+            let waitTime = Math.random() * 3 + 2; // 2~5秒 (秒)
+            timeoutId = setTimeout(() => {
+                gameStarted = true;
+                startTime = performance.now();
+                message.textContent = '現在按反應鍵！';
+            }, waitTime * 1000);
+        };
+
+        reactBtn.onclick = function () {
+            if (!gameStarted) {
+                if (timeoutId !== null) {
+                    // 還沒開始
+                    message.textContent = '按太快了 還沒開始!!';
+                } else {
+                    message.textContent = '請先按開始鍵';
+                }
+            } else {
+                let reactionTime = performance.now() - startTime;
+                gameStarted = false;
+                clearTimeout(timeoutId);
+                timeoutId = null;
+
+                // 評語
+                let comment = '';
+                if (reactionTime <= 150) comment = '好快！非常優秀';
+                else if (reactionTime <= 350) comment = '嗯...普通?';
+                else comment = '網卡了嗎???';
+
+                message.textContent = `NICE!! 反應時間: ${reactionTime.toFixed(3)} 毫秒\n${comment}`;
+
+                // 3秒沒按的訊息不用了因為一按就算了
+
+                // 加入排行榜
+                leaderboard.push(reactionTime);
+                leaderboard.sort((a, b) => a - b);
+                if (leaderboard.length > 10) leaderboard.pop();
+                updateLeaderboard();
+            }
+        };
+    </script>
+</body>
+</html>
